@@ -1,4 +1,3 @@
-#credit to: https://github.com/mapado/haversine/blob/master/haversine/__init__.py
 def haversine(point1, point2, miles=True):
     from math import radians, cos, sin, asin, sqrt
     """ Calculate the great-circle distance between two points on the Earth surface.
