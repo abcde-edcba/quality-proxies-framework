@@ -23,9 +23,11 @@ The following Table replicates Table 7 and includes links to the dataset topics 
 |        No        | Twitter-Latest |     [coronavirus](/Dataset/twitter_latest/20200410154858_coronavirus/coronavirus_qp_mc.json.mc)    |       2020-04-09      |  541 (500 tweets) |
 |        No        | Twitter-Latest |   [2018 world cup](/Dataset/twitter_latest/20190109000000_2018_world_cup/2018_world_cup_qp_mc.json.mc)   |       2019-01-09      |  84 (488 tweets)  |
 ## Code 
-Consider the following implementation details for the Quality Proxies
+Consider the following implementation details for the Quality Proxies. All section references point to the sections in the paper.
+
 ### Post popularity (Section 3.2)
 The post popularity was instantiated with with metrics that count how many people replied to (`replies rp`), shared (`shares sh`), and liked (`likes lk`) a social media post. All of these are normalized with [Min-max feature scaling](https://en.wikipedia.org/wiki/Feature_scaling) to fit within the `[0, 1]` range. In which 0 represents the least popular post and 1 represents the most popular post.
+
 ### Author popularity (Section 3.3)
 We instantiated the author-popularity `ap` with the difference between the `in-degree` and the `out-degree` (ap = in-degree − out-degree) normalized. For Twitter, the in-degree represents the number of followers (`followers_count`) and out-degree represents the number of followings (`friends_count`). Both values can be extracted from the [user object](https://developer.twitter.com/en/docs/twitter-api/v1/data-dictionary/overview/user-object). If the `in-degree < out-degree`, then ap < 0 eventhough we want it to fall within `[0, 1]`. To fix this, the offset (the absolute value of smallest difference between in-degree and out-degree) is added to each difference before [Min-max feature normalization](https://en.wikipedia.org/wiki/Feature_scaling). The table below illustrates an example for calculating the `ap` the following Twitter accounts: `@WHO`, `@IOMSouthSudan`, `@PNASNews`, and `@Microbiology_LR`.
 
@@ -36,8 +38,22 @@ The author-popularity ap<sub>i</sub> values  of  four  seeds.   The `in-` and `o
 |  `@IOMSouthSudan`  |            9,237           |               740              |                       8,497                      |                            8,497                            |     0.0008     |
 |     `@PNASNews`    |           118,866          |              1,343             |                      117,523                     |                           117,523                           |     0.0210     |
 | `@Microbiology_LR` |            3,886           |               163              |                       3,723                      |                            3,723                            |        0       |
-|                    |                            |                                |              min(d <sub> i </sub> )              | 3,723                                                       |                |
-|                    |                            |                                |              max(d <sub> i </sub> )              | 5,398,137                                                   |                |
+|                    |                            |                                |              min(d<sub> i</sub> )              | 3,723                                                       |                |
+|                    |                            |                                |              max(d<sub> i</sub> )              | 5,398,137                                                   |                |
+
 ### Domain popularity (Section 3.4)
 We instantiated the domain-popularity `dp` quality proxy by approximating the popularity of the social media account (e.g., `@CDCgov`) associated withthe seed domain (e.g., `cdc.gov`). To calculate `dp` for a seed (e.g., https://www.cdc.gov/coronavirus/2019-nCoV/)), utilizing Twitteras example, first, we must find the social media account (https://twitter.com/CDCgov) associated with the domain (e.g., `cdc.gov`). This is done by finding a bi-directional link between the social me-dia account and the seed's website. Therefore, 
-`dp` is calculated in the same fashion as ap with one important difference: the `in-` and `out-degree` information is extracted from the Twitter handle that has a bi-directional link with the domain of the seed as illustrated by the [Table in Section 3.4](#)
+`dp` is calculated in the same fashion as ap with one important difference: the `in-` and `out-degree` information is extracted from the Twitter handle that has a bi-directional link with the domain of the seed as illustrated by the [Table in Section 3.4](#author-popularity-section-33)
+
+### Geographical (Section 4.1) Quality Proxy
+We instantiated author (ge<sub>a</sub>) and domain (ge<sub>d</sub>) QPs with the normalized (`[0, 1]`) distance (measured with the [Haversine formula](/Code/haversine.py)) between a reference epicenter and the geo-location associated with the post author (for ge<sub>a</sub>) or social media account associated via a bi-directional link (similar to `dp`) with the seed domain (for ge<sub>d</sub>). We utilized the [Google Maps Services Places API](https://developers.google.com/places/web-service/search) to normalize names (e.g., "NYC" and "New York") into a single name and geo-coordinates.
+
+The `normalizeLoc()` [function](/Code/normalizeLocation.py) implements the normalization of location:
+```
+gmaps = googlemaps.Client(key=googlemapsKey)
+places = gmaps.places("NYC")
+```
+The function requires you to get your Google Maps Key. This can be done for free by following the following steps:
+1. Created account on [Google Cloud Platform](https://console.cloud.google.com/) and Project
+2. Activated Places API from Google Cloud Platform Dashboard
+3. Enable billing (You're given free trial credit of $300 for 12 months, subsequently you may pay as you go if you choose to upgrade)
