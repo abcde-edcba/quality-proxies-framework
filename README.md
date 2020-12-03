@@ -57,3 +57,30 @@ The function requires you to get your Google Maps Key. This can be done for free
 1. Created account on [Google Cloud Platform](https://console.cloud.google.com/) and Project
 2. Activated Places API from Google Cloud Platform Dashboard
 3. Enable billing (You're given free trial credit of $300 for 12 months, subsequently you may pay as you go if you choose to upgrade)
+
+### Temporal (Section 4.2) Quality Proxy
+We instantiate the Temporal QP with the normalized time difference between the publication date of the seed and the reference point considered early. [Newspaper](https://github.com/codelucas/newspaper) can be used to extract the publication date from news articles when available within the document. Otherwise [CarbonDate](https://github.com/oduwsdl/CarbonDate) can be used to estimate the creation date of the document.
+
+### Subject-expert (Section 4.3) Quality Proxy
+We used Document Frequency (DF) to instantiate the subject-expertise (`su`) of the domain of a seed. We extracted DF scores by counting the number of result pages returned by Google for a given query normalized (divided) by the total number of pages indexed by the search engine for the site.
+
+### Retrievability (Section 4.4) Quality Proxy
+We instantiated the Retrievability `rt` of a seed (e.g., https://www.cdc.gov/vhf/ebola/index.html) with its reciprocal rank 1/rank<sub>d</sub> (e.g., 1/2) when searching the first k (e.g., k=20) Google SERPs for the seed with the query (e.g., "ebola virus") used to extract seeds. This might require scraping Google to extract the number of document hits returned by the Google Search Engine Result Page (SERP). We did not provide code for Scraping Google since scraping is not allowed. However, some [libraries](https://github.com/NikolaiT/GoogleScraper) provide this capability.
+
+### Reputation (Section 4.5) Quality Proxy
+The broad (re<sub>b</sub>) and narrow (re<sub>n</sub>) Reputation QPs for seed domains where instantiated with the citation rates of seed domains from the references of [gold-standard Wikipedia documents](/Dataset/reputation_gold_standard).
+
+### Relevance (Section 4.6) Quality Proxy
+We instantiated the Relevance `rl` QP by simply measuring the cosine-similarity between a seed's document vector and a gold-standard document vector that captures our definition of relevance. The gold-standard is created by concatenating the text of hand-selected documents (Section 8.2, Step 1) that are relevant to a topic, and creating a feature (vocabulary) vector consisting of the TF or TFIDF weights of the terms in the concatenated document.
+
+The documents from the references of the Wikipedia articles below were used to generate document vectors for measuring relevance.  Relevance was approximated by the similarity between a seed's document vector and the gold-standard vector corresponding to the seed's topic.  Similarity exceeding the specified relevance threshold signaled the relevance of the seed.
+|        Topic       |                         Wikipedia Reference                        | Relevance Threshold | Document Count |
+|:------------------:|:------------------------------------------------------------------:|:-------------------:|:--------------:|
+|  hurricane harvey  |           https://en.wikipedia.org/wiki/Hurricane_Harvey           |         0.10        |       183      |
+| flint water crisis |          https://en.wikipedia.org/wiki/Flint_water_crisis          |         0.20        |       550      |
+|     coronavirus    |           https://en.wikipedia.org/wiki/COVID-19_pandemic          |         0.20        |       719      |
+|   2018 world cup   |          https://en.wikipedia.org/wiki/2018_FIFA_World_Cup         |         0.20        |       400      |
+|     ebola virus    | https://en.wikipedia.org/wiki/Western_African_Ebola_virus_epidemic |         0.20        |       697      |
+
+### Scarcity (Section 4.7) Quality Proxy
+The Scarcity QP requires [extracting the domain](/Code/getDomain.py) of seeds in order to calculate the ratio of the frequency of the domain to the total number of domains.
